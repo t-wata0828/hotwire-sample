@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: hotwire_sample-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3309:3306"
+
+  rails: &rails
+    build: .
+    image: hotwire_sample:latest
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - ./:/rails
+      - hotwire_sample_bundle_data:/usr/local/bundle
+      - hotwire_sample_tmp_data:/rails/tmp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    working_dir: /rails
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
+
+  runner:
+    <<: *rails
+    command: /bin/bash
+    profiles:
+      - manual
+
+volumes:
+  hotwire_sample_bundle_data:
+  hotwire_sample_tmp_data:
