@@ -1,0 +1,57 @@
+<%# ========================================
+    create.turbo_stream.erb - Todo作成時のTurbo Stream
+    ========================================
+    このビューは、Todoが正常に作成された後に自動的にレンダリングされます
+
+    【Turbo Streams の仕組み】
+    - コントローラーで format.turbo_stream が呼ばれると、このビューが実行される
+    - 複数のturbo_stream命令を一度に送信できる
+    - JavaScriptを書かずに、DOMの複数箇所を同時に更新できる
+
+    【このビューが行う処理】
+    1. 新しいTodoをリストの先頭に追加（prepend）
+    2. フォームをリセット（replace）
+%>
+
+<%# ========================================
+    処理1: 新しいTodoをリストの先頭に追加
+    ========================================
+    turbo_stream.prepend の構文:
+    - 第1引数: 対象となるHTML要素のID（"todos"）
+    - partial: レンダリングするパーシャル名
+    - locals: パーシャルに渡す変数
+
+    動作:
+    - id="todos" の要素の先頭に、新しいTodoを追加
+    - _todo.html.erb がレンダリングされ、挿入される
+    - アニメーション付きで表示される（CSSで定義）
+%>
+<%= turbo_stream.prepend "todos", partial: "todos/todo", locals: { todo: @todo } %>
+
+<%# ========================================
+    処理2: フォームを空の状態にリセット
+    ========================================
+    turbo_stream.replace の構文:
+    - 第1引数: 置き換える要素のID（"new_todo"）
+    - do...end: 置き換え後の内容
+
+    動作:
+    - id="new_todo" のTurbo Frameを新しい内容で置き換える
+    - Todo.new で新しい空のオブジェクトを渡す
+    - フォームが空の状態にリセットされる
+    - これにより、連続してTodoを追加できる
+
+    【重要】
+    Stimulusの reset-form コントローラーを使って入力フィールドをリセットする方法もありますが、
+    ここではTurbo Streamsでフォーム全体を置き換えることで確実にリセットしています
+%>
+<%= turbo_stream.replace "new_todo" do %>
+  <%= turbo_frame_tag "new_todo" do %>
+    <%= form_with model: Todo.new, local: false, data: { controller: "reset-form", action: "turbo:submit-end->reset-form#reset" } do |f| %>
+      <div class="form-group">
+        <%= f.text_field :title, placeholder: "何をしますか？", class: "form-input", required: true, autofocus: true %>
+        <%= f.submit "追加", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

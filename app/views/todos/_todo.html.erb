@@ -1,0 +1,65 @@
+<%# ========================================
+    _todo.html.erb - 個別のTodoアイテムを表示するパーシャル
+    ========================================
+    このパーシャルは index.html.erb から <%= render @todos %> で呼び出される
+
+    【Turbo Frame のポイント】
+    - 各TodoをTurbo Frameで囲むことで、個別に更新・編集できる
+    - dom_id(todo) は "todo_1", "todo_2" のようなユニークなIDを生成
+    - 編集リンクをクリックすると、このフレーム内だけが編集フォームに置き換わる
+%>
+
+<%#
+  dom_id(todo) の例:
+  - todoのidが1の場合 → "todo_1"
+  - todoのidが2の場合 → "todo_2"
+  このユニークなIDで、Turbo Streamsがどのフレームを更新するか特定できる
+%>
+<%= turbo_frame_tag dom_id(todo) do %>
+  <%#
+    data-controller="todo-item" でStimulusコントローラーを紐付け
+    Stimulusコントローラーはアニメーション効果などを制御
+  %>
+  <div class="todo-item <%= 'completed' if todo.completed %>" data-controller="todo-item">
+    <div class="todo-content">
+      <%#
+        【Turbo Frame の特殊な使い方】
+        チェックボックスをクリックしたときの動作:
+        - data: { turbo_frame: "_top" } を指定すると、Turbo Frameを抜けてページ全体に影響
+        - これにより、toggle.turbo_stream.erb でTurbo Streamsを使った更新が可能
+        - "_top" を指定しないと、このフレーム内だけの更新になってしまう
+      %>
+      <%= button_to toggle_todo_path(todo), method: :patch, class: "checkbox-btn", form: { data: { turbo_frame: "_top" } } do %>
+        <span class="checkbox <%= 'checked' if todo.completed %>">
+          <%= "✓" if todo.completed %>
+        </span>
+      <% end %>
+
+      <div class="todo-text">
+        <%# 完了済みの場合は打ち消し線を表示 %>
+        <span class="<%= 'line-through' if todo.completed %>"><%= todo.title %></span>
+        <small class="todo-date"><%= todo.created_at.strftime("%Y/%m/%d %H:%M") %></small>
+      </div>
+    </div>
+
+    <div class="todo-actions">
+      <%#
+        【Turbo Frame の動作】編集リンク
+        - クリックすると edit_todo_path(todo) にGETリクエスト
+        - edit.html.erb が返され、同じ dom_id のフレームを置き換える
+        - つまり、このTodoアイテムが編集フォームに変わる
+        - ページ全体はそのまま、この部分だけが編集モードになる
+      %>
+      <%= link_to "編集", edit_todo_path(todo), class: "btn btn-small btn-secondary" %>
+
+      <%#
+        【Turbo Streams の動作】削除ボタン
+        - data: { turbo_confirm: "..." } で確認ダイアログを表示
+        - OKをクリックすると DELETE リクエスト
+        - destroy.turbo_stream.erb が実行され、このTodoがDOMから削除される
+      %>
+      <%= button_to "削除", todo_path(todo), method: :delete, class: "btn btn-small btn-danger",
+          data: { turbo_confirm: "本当に削除しますか？" } %>
+    </div>
+  </div>
+<% end %>

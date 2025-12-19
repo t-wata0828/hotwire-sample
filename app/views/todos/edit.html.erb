@@ -1,0 +1,59 @@
+<%# ========================================
+    edit.html.erb - Todo編集フォーム
+    ========================================
+    【Turbo Frame の動作フロー】
+
+    1. _todo.html.erb で「編集」リンクをクリック
+       ↓
+    2. GET /todos/:id/edit リクエスト
+       ↓
+    3. このedit.html.erbがレンダリングされる
+       ↓
+    4. _todo.html.erb と同じ dom_id(@todo) のフレームなので
+       そのフレーム内だけが このビューに置き換わる
+       ↓
+    5. Todoアイテムが編集フォームに変わる（ページはそのまま）
+
+    【重要なポイント】
+    - dom_id(@todo) は _todo.html.erb と同じID
+    - 同じIDのフレーム同士が置き換わる仕組み
+    - ページ全体をリロードせず、該当部分だけが編集フォームになる
+%>
+
+<%#
+  _todo.html.erb と同じ dom_id を使うことで、
+  同じフレームとして認識され、置き換えが可能になる
+%>
+<%= turbo_frame_tag dom_id(@todo) do %>
+  <div class="todo-edit-form">
+    <%#
+      form_with のオプション:
+      - model: @todo → 既存レコードなので PATCH /todos/:id にリクエスト
+      - local: false → Turboを有効にする
+      - 送信すると update アクションが実行される
+    %>
+    <%= form_with model: @todo, local: false do |f| %>
+      <div class="form-group-inline">
+        <%= f.text_field :title, class: "form-input", required: true, autofocus: true %>
+        <%= f.submit "保存", class: "btn btn-primary btn-small" %>
+
+        <%#
+          キャンセルボタン:
+          - todos_path にリンク（一覧ページへ遷移）
+          - Turbo Driveにより、ページ全体がリロードされずに遷移
+          - 編集フォームが元のTodoアイテム表示に戻る
+        %>
+        <%= link_to "キャンセル", todos_path, class: "btn btn-small btn-secondary" %>
+      </div>
+
+      <%# バリデーションエラー時の表示 %>
+      <% if @todo.errors.any? %>
+        <div class="error-messages">
+          <% @todo.errors.full_messages.each do |message| %>
+            <p><%= message %></p>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

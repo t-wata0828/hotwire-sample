@@ -1,0 +1,104 @@
+<%# ========================================
+    index.html.erb - Todoリスト画面
+    ========================================
+    このビューはHotwireの3つの主要機能を実演します：
+    1. Turbo Frames - フォームの部分更新
+    2. Turbo Streams - リストの動的更新
+    3. Stimulus - JavaScriptインタラクション
+%>
+
+<div class="container">
+  <h1>Hotwire Todo App</h1>
+  <p class="subtitle">Turbo Frames, Turbo Streams, Stimulus のデモ</p>
+
+  <%# ========================================
+      【Turbo Frame の例】新規Todo作成フォーム
+      ========================================
+      turbo_frame_tag でフォームを囲むことで、このフレーム内だけを更新できる
+
+      重要なポイント:
+      - フォーム送信後、このフレーム内だけが更新される（ページ全体はリロードされない）
+      - create.turbo_stream.erbで、このフレームを置き換える処理を記述
+      - エラーがある場合も、このフレーム内にエラーメッセージを表示
+  %>
+  <div class="card">
+    <h2>新しいTodoを追加</h2>
+
+    <%# Turbo Frame開始: ID "new_todo" のフレームを定義 %>
+    <%= turbo_frame_tag "new_todo" do %>
+      <%#
+        form_with のオプション説明:
+        - model: @todo → 新規作成なので POST /todos にリクエスト
+        - local: false → Turboを有効にする（デフォルトでtrueだが明示的に指定）
+        - data: { controller: "reset-form" } → Stimulusコントローラーを紐付け
+        - data: { action: "turbo:submit-end->reset-form#reset" }
+          → フォーム送信完了時に reset-form コントローラーの reset メソッドを実行
+      %>
+      <%= form_with model: @todo, local: false, data: { controller: "reset-form", action: "turbo:submit-end->reset-form#reset" } do |f| %>
+        <div class="form-group">
+          <%= f.text_field :title, placeholder: "何をしますか？", class: "form-input", required: true, autofocus: true %>
+          <%= f.submit "追加", class: "btn btn-primary" %>
+        </div>
+
+        <%# バリデーションエラーメッセージの表示 %>
+        <% if @todo.errors.any? %>
+          <div class="error-messages">
+            <% @todo.errors.full_messages.each do |message| %>
+              <p><%= message %></p>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# ========================================
+      【Turbo Streams の例】Todoリスト
+      ========================================
+      Turbo Streamsを使って、リストの特定の要素を追加/更新/削除できる
+
+      重要なポイント:
+      - id="todos" のdiv要素が更新対象のコンテナ
+      - create.turbo_stream.erb で新しいTodoを prepend（先頭に追加）
+      - update.turbo_stream.erb で特定のTodoを replace（置き換え）
+      - destroy.turbo_stream.erb で特定のTodoを remove（削除）
+      - ページ全体をリロードせずに、必要な部分だけを更新
+  %>
+  <div class="card">
+    <h2>Todoリスト (<span id="todo-count"><%= @todos.count %></span>件)</h2>
+
+    <%#
+      Turbo Streamsの更新対象コンテナ
+      このdiv内にTodoが追加・更新・削除される
+    %>
+    <div id="todos">
+      <%#
+        render @todos は以下と同じ意味:
+        @todos.each do |todo|
+          render partial: "todos/todo", locals: { todo: todo }
+        end
+
+        各Todoは _todo.html.erb パーシャルでレンダリングされる
+      %>
+      <%= render @todos %>
+    </div>
+
+    <%# Todoが1つもない場合の表示 %>
+    <% if @todos.empty? %>
+      <p class="empty-state">まだTodoがありません</p>
+    <% end %>
+  </div>
+
+  <!-- 説明セクション -->
+  <div class="card info-card">
+    <h3>このアプリで使用されているHotwireの機能</h3>
+    <ul>
+      <li><strong>Turbo Frames</strong>: 新規Todo作成フォームと編集フォームで使用。ページ全体をリロードせずに部分的に更新</li>
+      <li><strong>Turbo Streams</strong>: Todo の作成、更新、削除時にページをリロードせずに DOM を更新</li>
+      <li><strong>Stimulus</strong>: フォームのリセット、アニメーション効果などのインタラクションを制御</li>
+    </ul>
+    <p style="margin-top: 1rem; font-size: 0.875rem; color: #718096;">
+      ※ ActionCableを追加すると、複数ブラウザ間でのリアルタイム同期も可能になります
+    </p>
+  </div>
+</div>
