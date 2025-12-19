@@ -39,3 +39,13 @@
     7. after    - 要素の後に追加
 %>
 <%= turbo_stream.remove dom_id(@todo) %>
+
+<%# ========================================
+    最後のTodoが削除された場合、空メッセージを表示
+    ========================================
+%>
+<% if @todos_count == 0 %>
+  <%= turbo_stream.append "todos" do %>
+    <p class="empty-state" id="empty-state">まだTodoがありません</p>
+  <% end %>
+<% end %>

@@ -80,13 +80,12 @@
 
         各Todoは _todo.html.erb パーシャルでレンダリングされる
       %>
-      <%= render @todos %>
+      <% if @todos.empty? %>
+        <p class="empty-state" id="empty-state">まだTodoがありません</p>
+      <% else %>
+        <%= render @todos %>
+      <% end %>
     </div>
-
-    <%# Todoが1つもない場合の表示 %>
-    <% if @todos.empty? %>
-      <p class="empty-state">まだTodoがありません</p>
-    <% end %>
   </div>
 
   <!-- 説明セクション -->

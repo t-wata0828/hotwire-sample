@@ -90,6 +90,8 @@ class TodosController < ApplicationController
   # - アニメーション付きでスムーズに削除される（Stimulusコントローラーと連携）
   def destroy
     @todo.destroy
+    # 削除後に残っているTodoの数を確認
+    @todos_count = Todo.count
     respond_to do |format|
       # Turbo Stream形式でレスポンス（destroy.turbo_stream.erbを使用）
       format.turbo_stream
